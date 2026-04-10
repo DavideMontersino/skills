@@ -1,12 +1,12 @@
 ---
 name: morning-espresso
-description: Daily morning context builder — AWS login, PR dashboard, Jira scan, git context, goal tracking, worktree cleanup, and daily log to Obsidian vault.
+description: Daily morning context builder — AWS login, daily gap detection, PR dashboard, Jira scan, git context, goal tracking, worktree cleanup, and daily log to Obsidian vault.
 user-invocable: true
 ---
 
 # Morning Espresso
 
-Start each workday with full context. This skill checks credentials, gathers status across all repos and projects, measures goal progress, cleans up stale worktrees, logs everything to an Obsidian vault, and recommends what to do first.
+Start each workday with full context. This skill checks credentials, detects and backfills missing daily logs, gathers status across all repos and projects, measures goal progress, cleans up stale worktrees, logs everything to an Obsidian vault, and recommends what to do first.
 
 ## Prerequisites
 
@@ -37,6 +37,72 @@ Run `~/.local/bin/aws-morning-login`.
 **CRITICAL**: If it fails or prompts for browser auth, STOP and tell the user to complete SSO login manually. Never run `aws sso login` or any auth command without explicit user approval.
 
 Report the status table to the user.
+
+## Phase 1.25 — Daily Log Gap Detection
+
+Check for missing daily logs and generate retroactive entries before continuing. This runs early because it may produce multiple dailies and requires user interaction.
+
+### Scan for gaps
+
+1. List files in `~/dmon-coding/stx-vault/daily/` matching `YYYY-MM-DD.md` (exclude session files `*-session-*.md`)
+2. Find the most recent daily log date
+3. Calculate the gap between that date and today
+
+**No gap** (last daily = yesterday or today): skip to Phase 1.5.
+
+**Gap > 10 days**: report the gap to the user and ask how to proceed — don't attempt to backfill automatically.
+
+### Process each missing date (chronologically, oldest first)
+
+For each missing date between the last daily and today:
+
+**a) Weekend?** If the date is a Saturday or Sunday, skip it. Note it in the conversation but don't create a daily.
+
+**b) Check for activity** on that date:
+
+- **Git**: run across all known repos (from the Repos list above):
+  ```bash
+  git -C ~/coding/<repo>/main log --author="Davide" --after="YYYY-MM-DD 00:00" --before="YYYY-MM-DD 23:59" --oneline --all 2>/dev/null
+  ```
+- **Session summaries**: check for `~/dmon-coding/stx-vault/daily/YYYY-MM-DD-session-*.md`
+
+**c) Activity found but no daily**: morning-espresso wasn't run that day. Generate a retroactive daily log using git log and session summaries as source material. Follow the same format as Phase 6 (Standup: Done/Today/Blocked + Goal Progress). Prepend the file with:
+
+```markdown
+> Retroactive daily — generated on YYYY-MM-DD from git and session data
+```
+
+**d) No activity found**: likely a day off. Ask the user:
+
+> "No daily log for [date] and no git activity found. Was this a day off, vacation, sick day, or something else?"
+
+Create a minimal daily file for that date with just the header and the user's answer:
+
+```markdown
+> Day off — [user's answer]
+```
+
+### Confirmation before writing
+
+Before generating any retroactive dailies, present a summary of what would be created:
+- Dates with activity → "Will generate retroactive daily from N commits + M session files"
+- Dates with no activity → "Will ask about: [date1], [date2]"
+- Weekend dates → "Skipped (weekend): [dates]"
+
+Wait for user confirmation before proceeding.
+
+### Commit retroactive dailies
+
+Commit each generated daily to the vault individually:
+
+```bash
+cd ~/dmon-coding/stx-vault && git add daily/YYYY-MM-DD.md && git commit -m "daily: retroactive YYYY-MM-DD"
+```
+
+For day-off entries:
+```bash
+cd ~/dmon-coding/stx-vault && git add daily/YYYY-MM-DD.md && git commit -m "daily: YYYY-MM-DD (day off)"
+```
 
 ## Phase 1.5 — What Are You Working On?
 
