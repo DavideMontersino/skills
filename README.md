@@ -5,7 +5,7 @@ Personal [agent skills](https://agentskills.io) for Claude Code and other compat
 ## Install
 
 ```bash
-npx skills@latest add dmon-coding/skills/<skill-name>
+npx skills@latest add DavideMontersino/skills/<skill-name>
 ```
 
 ## Skills
@@ -17,6 +17,7 @@ npx skills@latest add dmon-coding/skills/<skill-name>
 | [marie-congit](./marie-congit) | Deep git cleanup — categorize worktrees and branches by PR status, dirty state, and divergence, then interactively clean tier by tier. |
 | [rebase-onto-main](./rebase-onto-main) | Rebase onto origin/main, union-resolve package.json conflicts, regenerate the lockfile, and force-push with lease. |
 | [redact-history](./redact-history) | Squash and reword messy commit history into clean, grouped commits before merging. |
+| [rfc-expert](./rfc-expert) | Senior RFC author/reviewer persona — house RFC structure, ADR-grounding, decisive-but-honest open questions, compliance flags, and anti-AI-slop editing. |
 | [review-pr](./review-pr) | Fetch unresolved PR review comments, plan fixes, implement, commit, and reply on GitHub. |
 | [self-review](./self-review) | Pre-PR code review analyzing data flow consistency, pattern conformance, API contracts, and query efficiency. |
 | [youtube-transcript](./youtube-transcript) | Fetch YouTube video transcripts/subtitles as plain text. No API key required. |
