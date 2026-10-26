@@ -102,6 +102,7 @@ Title format: `<type>(<TICKET-KEY>): <description>`
 - `<type>`: infer from the most impactful commit type on the branch, or ask
 - `<TICKET-KEY>`: extracted from the branch name (see Step 1.2)
 - `<description>`: derived from commit messages, imperative mood
+- **The repo's own title rule wins.** Check `.claude/rules/writing.md` / `CONTRIBUTING.md` and any title-check script (e.g. core-services `npm-scripts/check-pr-title.mjs`) first: core-services wants `type(area): summary` (area, not ticket key), lower case, ≤72 chars. Never add a `[DRAFT]`/`WIP` prefix; the title check fails it.
 
 Open the PR ready-for-review — never `gh pr create --draft` (Copilot doesn't review drafts).
 
@@ -168,17 +169,21 @@ Based on `/pr-watch` output:
 
 ## Phase 4 — Finalize
 
-Once CI is green and all reviews are resolved, report:
+Once CI is green and all reviews are resolved, **review the CDK template diff before declaring the PR ready** — a green run does not mean the infra diff was looked at. Follow `pr-watch` Step 6 ("Review the CDK template diff"): classify every changed resource in the bot's `<!-- cdk-diff -->` comment (asset-hash-only vs API-body vs structural), watch for dormant spec drift riding along on generated-package pin bumps, reply with the classification on the bot's thread and resolve it.
+
+Then report:
 ```
 PR #N ready for human review
 URL: <url>
 Title: <type>(<TICKET-KEY>): <description>
 CI: passing
 Reviews: all resolved
+CDK diff: reviewed — <one-line classification>
 ```
 
 ## Important Notes
 
+- **Merging is a human step in `stxcommodities` repos**: an org ruleset makes `gh pr merge` fail with "base branch policy prohibits the merge", and the `--admin`/REST fallbacks are permission-blocked for agents. When the PR is green and reviews are addressed, do NOT retry merge variants — hand the user the exact command (`gh pr merge <N> --squash --admin --repo <owner>/<repo>`, runnable via `!` in-session) or ask them to merge in the web UI.
 - **5 approval gates**: self-review, branch name, commit message, PR title, review fixes (via /review-pr)
 - Never force-push without explicit user confirmation
 - Never skip `/ci-check` — always run before every push
