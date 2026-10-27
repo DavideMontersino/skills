@@ -296,6 +296,14 @@ Run `/ship-pr` with the note **"self-review already done"** (so ship-pr skips it
 4. Fix issues via `/review-pr` loop
 5. Finalize: report the PR ready for human review when clean
 
+### Step 3.2b: Generated-package follow-up PR (TypeSpec repos)
+
+When the work spans a TypeSpec PR and a consumer PR (core-services `generated-packages.md`), the consumer PR must bump **every** package the TypeSpec merge published, not only the ones the consumer code imports. Runtime validation lives in packages nobody imports directly: e.g. COS writes through `@stxgroup/ddb-entities` (ElectroDB) and validates requests against `@stxgroup/cos-openapi3`. Missing one ships a fix that still fails at runtime (#9441: the 64-char limit stayed in `ddb-entities` until a third PR).
+
+1. Wait for the `publish.yml` run on the merge commit to succeed.
+2. `git fetch --tags origin && git tag --contains <merge-sha>`: every tag listed was published by that merge.
+3. Bump each matching pin in root `package.json`. For each bump that skips majors, list the skipped releases (`git log -1 <pkg>-v<N>` per version) and say in the PR what rides along.
+
 ### Step 3.3: Update Jira
 
 After PR is created, use `/jira` to:
